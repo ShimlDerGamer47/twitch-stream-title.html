@@ -25,6 +25,7 @@ document.addEventListener("DOMContentLoaded", () => {
       justifyContent: "center",
       width: "100%",
       height: "100%",
+      objectFit: "cover",
       margin: "0",
       padding: "0",
       userSelect: "none",
