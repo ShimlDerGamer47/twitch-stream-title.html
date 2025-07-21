@@ -11,34 +11,71 @@ document.addEventListener("DOMContentLoaded", () => {
   titleTxt.style.fontFamily = robotoBold;
 
   const params = new URLSearchParams(window.location.search);
+  const channelName = params.get("channelName") || "Shiml_der_Gamer47";
+  const color = params.get("color") || "#ffffff";
+  const textDecoration = params.get("textDecoration") || "none";
+  const fontSizeParam = params.get("fontSize") || "50px";
 
-  const channelName = params.get("channelName");
-
-  const fontSize = params.get("fontSize");
-  const color = params.get("color");
-  const textDecoration = params.get("textDecoration");
-
-  if (fontSize) titleTxt.style.fontSize = fontSize;
   if (color) titleTxt.style.color = color;
   if (textDecoration) titleTxt.style.textDecoration = textDecoration;
 
-  const twitchTitleApi = `https://decapi.me/twitch/title/${encodeURIComponent(
-    channelName
-  )}`;
+  let maxFont = 200;
+  if (fontSizeParam) {
+    const parsed = parseInt(fontSizeParam, 10);
+
+    if (!isNaN(parsed)) maxFont = parsed;
+  }
+
+  function fitText(elem, maxF = maxFont, minF = 8) {
+    const container = elem.parentElement;
+
+    const cw = container.clientWidth;
+    const ch = container.clientHeight;
+
+    let lo = minF,
+      hi = maxF,
+      best = minF;
+
+    while (lo <= hi) {
+      const mid = Math.floor((lo + hi) / 2);
+      elem.style.fontSize = mid + "px";
+
+      if (elem.scrollWidth <= cw && elem.scrollHeight <= ch) {
+        best = mid;
+        lo = mid + 1;
+      } else {
+        hi = mid - 1;
+      }
+    }
+
+    elem.style.fontSize = best + "px";
+  }
+
+  function updateAndFit(text) {
+    titleTxt.textContent = text || "Kein Titel vorhanden!";
+    fitText(titleTxt);
+  }
+
+  window.addEventListener("resize", () => {
+    fitText(titleTxt);
+  });
 
   if (channelName) {
+    const twitchTitleApi = `https://decapi.me/twitch/title/${encodeURIComponent(
+      channelName
+    )}`;
     fetch(twitchTitleApi)
       .then((res) => res.text())
       .then((title) => {
         if (title.startsWith("User not found:")) {
-          titleTxt.textContent = "";
-          return;
+          updateAndFit("");
+        } else {
+          updateAndFit(title);
         }
-
-        titleTxt.textContent = title || "Kein Titel vorhanden!";
       })
-      .catch((error) => {
-        console.error("Fehler beim Abrufen des Titels:", error);
+      .catch((err) => {
+        console.error("Fehler beim Abrufen des Titels:", err);
+        updateAndFit("");
       });
   }
 });
